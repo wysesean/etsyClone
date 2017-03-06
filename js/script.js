@@ -99,6 +99,7 @@ var ListView = Backbone.View.extend({
 			html+='<p id="searchParameters">Showing results for: '+searchParam[1]+'</p>'
 		}
 		this.collection.forEach(function(inputCollection){
+			console.log(this.collection)
 			inputObj = inputCollection.attributes
 			html+=	'<div id="listElement">'
 			html+=			'<img id="listImg" listingid="'+inputObj.listing_id+'" src="'+inputObj.Images[0]['url_170x135']+'">'
