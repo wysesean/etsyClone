@@ -1,3 +1,5 @@
+//CSS loading spinner provided by @tobiasahlin
+
 console.log('Hello there')
 var etsyKey = config.ETSY_KEY
 
@@ -8,29 +10,51 @@ var etsyKey = config.ETSY_KEY
     \ \/ /   | | |  __|   \ \/  \/ /  
      \  /   _| |_| |____   \  /\  /   
       \/   |_____|______|   \/  \/ */
-var ListView = Backbone.View.extend({
-	el:'body',
+
+
+var MenuListView = Backbone.View.extend({
+	el: 'div#leftContent',
 	events:{
-		'keydown input#searchBar': '_runSearch',
-		'click img#homeImg': '_runDetailView',
-		'click button#onSale': '_addCategorySale',
-		'click button#hasImages': '_addCategoryImages',
-		'click button#postWeek': '_addCategoryWeek'
+		'keydown #searchBar': '_runSearch',
+		'click input#onSale': '_runToggles',
+		'click input#hasImage': '_runToggles',
+		'click input#postedWeek': '_runToggles'
 	},
+	_runToggles:function(){
+		var salesToggleNode = document.querySelector('#onSale'),
+			imageToggleNode = document.querySelector('#hasImage'),
+			weekToggleNode = document.querySelector('#postedWeek')
+		console.log(EtsyRouter.prototype)
 
-	initialize: function(){
-		// var buttonNode = document.querySelector('#rightContent')
-		// contentNode.innerHTML = ''
+		if(salesToggleNode.checked){
+			console.log('sales toggle')
+		}
+		else{
+			
+		}
+		if(imageToggleNode.checked){
 
-		this.listenTo(this.collection, 'sync', this.render)
+		}
 	},
-
 	_runSearch: function(e){
 		console.log('search is working')
 		var searchInput = e.target.value
 		if(e.keyCode === 13){
 			location.hash = "search/" + searchInput
+			e.target.value = ''
 		}
+	},
+})
+
+//Displays a list of 
+var ListView = Backbone.View.extend({
+	el:'body',
+	events:{
+		'click img#listImg': '_runDetailView'
+	},
+
+	initialize: function(){
+		this.listenTo(this.collection, 'sync', this.render)
 	},
 
 	_runDetailView: function(e){
@@ -38,28 +62,21 @@ var ListView = Backbone.View.extend({
 		location.hash = "detail/" + imageNode.getAttribute('listingid')
 	},
 
-	_addCategorySale: function(){
-		console.log('push my buttons1')
-	},
-	_addCategoryImages: function(){
-		console.log('push my buttons2')
-	},
-	_addCategoryWeek: function(){
-		console.log('push my buttons3')
-	},
-
 	render: function(){
+		hideLoader()
 		var contentNode = document.querySelector('#rightContent')
 		var html = ''
+		var searchParam =location.hash.substr(1).split('/')
+		if(searchParam[0]==='search'){
+			html+='<p id="searchParameters">Showing results for: '+searchParam[1]+'</p>'
+		}
 		this.collection.forEach(function(inputCollection){
 			inputObj = inputCollection.attributes
-			html+=	'<div class="homeElement">'
-			// html+=		'<a href="#details/'+inputObj.listing_id+'">'
-			html+=			'<img id="homeImg" listingid="'+inputObj.listing_id+'" src="'+inputObj.Images[0]['url_570xN']+'">'
-			html+=			'<p id="homeFormattedTitle">'+formatTitle(inputObj.title)+'</p>'
-			html+=			'<p id="homeTitle">'+inputObj.title+'</p>'
-			// html+=		'</a>'
-			html+=			'<p id="homePrice"> $'+inputObj.price+'</p>'
+			html+=	'<div id="listElement">'
+			html+=			'<img id="listImg" listingid="'+inputObj.listing_id+'" src="'+inputObj.Images[0]['url_170x135']+'">'
+			html+=			'<p id="listFormattedTitle">'+formatTitle(inputObj.title)+'</p>'
+			// html+=			'<p id="listTitle">'+inputObj.title+'</p>'
+			html+=			'<p id="listPrice"> $'+inputObj.price+'</p>'
 			html+=	'</div>'
 		})
 		contentNode.innerHTML = html
@@ -69,18 +86,24 @@ var ListView = Backbone.View.extend({
 
 //Displays the details for an individual listing.
 var DetailView = Backbone.View.extend({
+	el:'body',
+
 	initialize: function(){
-		var contentNode = document.querySelector('#rightContent')
-		contentNode.innerHTML = ''
+		// var contentNode = document.querySelector('#rightContent')
+		// contentNode.innerHTML = ''
 		this.listenTo(this.model, 'sync', this.render)
 	},
 	render: function(){
+		hideLoader()
 		console.log('hot models: ',this.model)
+		var obj = this.model.attributes[0]
 		var contentNode = document.querySelector('#rightContent')
 		var html = ''
 		html += '<div class="detailElement">'
-		html += 	'<img src="'+this.model.attributes[0].Images[0]['url_570xN']+'">'
-		html += 	'<p id="detailDescription">'+this.model.attributes[0].description+'</p>'
+		html += 	'<img id="detailImg" src="'+obj.Images[0]['url_570xN']+'">'
+		html +=		'<p id="detailPrice"> $'+obj.price+'</p>'
+		html +=		'<button id="detailBuyButton">Buy Now</button>'
+		html += 	'<p id="detailDescription">'+obj.description+'</p>'
 		html += '</div>'
 		contentNode.innerHTML = html
 	}
@@ -123,22 +146,26 @@ var DetailModel = Backbone.Model.extend({
  \_____\____/|_| \_|  |_|  |_|  \_\\____/|______|______|______|_|  \_\*/
 var EtsyRouter = Backbone.Router.extend({
 	routes:{
-		'home': 'showHomePage',
+		'home': 'showHomeListPage',
 		'search/:query': 'showSearchPage',
 		'detail/:itemID': 'showDetailPage',
-		'': 'setToHomePage'
+		'': 'setToHomePage',
+		// '*default': 'showLeftMenu',
+	},
+	showLeftMenu: function(){
+		var leftMenuInstance = new MenuListView()
 	},
 	setToHomePage: function(){
 		location.hash = 'home'
 	},
-	showHomePage: function(){
+	showHomeListPage: function(){
+		showLoader()
 		var homeInstance = new ListCollection()
 		homeInstance.fetch({
 			dataType: 'jsonp',
 			data:{
                 'includes' : 'Images',
 				'api_key': etsyKey,
-				'keywords': checkSale()
 			}
 		})
 
@@ -147,21 +174,22 @@ var EtsyRouter = Backbone.Router.extend({
 		})
 	},
 	showSearchPage: function(query){
+		showLoader()
 		var searchInstance = new ListCollection()
 		searchInstance.fetch({
 			dataType: 'jsonp',
 			data:{
                 'includes' : 'Images',
 				'api_key': etsyKey,
-				'keywords': query + checkSale()
+				'keywords': query 
 			}
 		})
-
 		var searchViewInstance =  new ListView({
 			collection: searchInstance
 		})
 	},
 	showDetailPage: function(itemID){
+		showLoader()
 		console.log('detail has been summoned')
 		var detailInstance = new DetailModel()
 		detailInstance._generate_URL(itemID)
@@ -197,12 +225,26 @@ function formatTitle(str){
     return str
 }
 
-function checkSale(){
+function showLoader(){
+	console.log('show loader')
+	var loadNode = document.querySelector('.sk-circle')
+		contentNode = document.querySelector('#rightContent')
+	if(contentNode.innerHTML){
+		contentNode.innerHTML = ''
+	}
+	loadNode.style.display = 'block';
+}
 
+function hideLoader(){
+	console.log('hide loader')
+	var loadNode = document.querySelector('.sk-circle')
+	loadNode.style.display = 'none';
 }
 
 function main(){
-	new EtsyRouter()
+	showLoader()
+	var instanceRouter = new EtsyRouter()
+	instanceRouter.showLeftMenu()
 	Backbone.history.start() 
 }
 main()
