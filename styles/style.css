@@ -36,6 +36,7 @@ label{
 input[type=checkbox]{
 	float:left;
 }
+
 #mainContainer{
 	position:relative;
 }
@@ -112,11 +113,36 @@ input[type=checkbox]{
 	width: 10vw;
 	align-self: center;
 }
+
+#imgGallery{
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-content: center;
+	width: 70vw;
+}
 #detailImg{
 /*	max-height: 50vh;
 */	max-height: 60vh;
 	max-width: 60vh;
 	align-self: center;
+}
+
+#miniImgContainer{
+	align-self:top;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-content: center;
+
+}
+#miniDetailImg{
+	max-height: 15vh;
+	max-width: 15vh;
+	padding: 10px;
+}
+#arrows{
+	text-align: center;
 }
 
 .spinner {
